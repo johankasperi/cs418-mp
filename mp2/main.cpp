@@ -63,7 +63,7 @@ void mountain(float x0, float y0, float z0, float x1, float y1, float z1, float 
         glBegin(GL_TRIANGLES);
         glVertex3f(x0,y0,z0);
         glVertex3f(x1,y1,z1);
-
+        
         glVertex3f(x2,y2,z2);
         glEnd();
         
@@ -77,18 +77,18 @@ void mountain(float x0, float y0, float z0, float x1, float y1, float z1, float 
     y12 = 0.5*(y1 + y2);
     z12 = 0.5*(z1 + z2);
     
-
+    
     x20 = 0.5*(x2 + x0);
     y20 = 0.5*(y2 + y0);
     z20 = 0.5*(z2 + z0);
     
-    // Making it look like the alps
+    // Making it look like the alps by checking the z01 value and apply different lighting based on that.
     if(z01>0.08) {
         glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, snowamb);
         glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, snowdiff);
         glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, snowdiff);
     }
-    else if(z01<0.08 && z01>0.06) {
+    else if(z01<0.08 && z01>0.04) {
         glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, greyamb);
         glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, greydiff);
         glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, greydiff);
@@ -130,8 +130,8 @@ void init(void)
     glClearColor (0.5, 0.5, 1.0, 0.0);
     /* glShadeModel (GL_FLAT); */
     glEnable(GL_DEPTH_TEST);
-
-    sealevel = 0.0;
+    
+    sealevel = -0.05;
     polysize = 0.01;
 }
 
@@ -197,7 +197,7 @@ public:
     Vector lookAt = Vector(0.4, 0.1, -1);
     Vector up = Vector(0.0,1.0,0.0);
     Vector right = Vector(1.0, 0.0, 0.0);
-
+    
     // Move the airplane forward
     void moveForward(double speed) {
         eye = eye.add(lookAt.times(speed));
@@ -209,11 +209,13 @@ public:
         up.normalize();
         
         // Rotate lookAt about right as done in http://math.kennesaw.edu/~plaval/math4490/rotgen.pdf
+        // r = rotation axis, v = vector to be rotated
+        // T(v) = (1 - cos phi)(v x r)r + vcos phi + (r x v)sin phi
         lookAt = right.times((1-cos(angle))*lookAt.dot(right))
-            .add(lookAt.times(cos(angle)))
-            .add(right.cross(lookAt).times(sin(angle)));
+        .add(lookAt.times(cos(angle)))
+        .add(right.cross(lookAt).times(sin(angle)));
         
-        // lookAt and right is unit length and orthogonal, get up by taking cross product of these instead of rotating it.
+        // lookAt and right is unit length and orthogonal, get up vector by taking cross product of these instead of rotating it.
         up = right.cross(lookAt);
     }
     
@@ -223,11 +225,13 @@ public:
         right.normalize();
         
         // Rotate up about lookAt as done in http://math.kennesaw.edu/~plaval/math4490/rotgen.pdf
+        // r = rotation axis, v = vector to be rotated
+        // T(v) = (1 - cos phi)(v x r)r + vcos phi + (r x v)sin phi
         up = lookAt.times((1-cos(angle))*up.dot(lookAt))
-            .add(up.times(cos(angle)))
-            .add(lookAt.cross(up).times(sin(angle)));
+        .add(up.times(cos(angle)))
+        .add(lookAt.cross(up).times(sin(angle)));
         
-        // lookAt and up is unit length and orthogonal, get right by taking cross product of these instead of rotating it.
+        // lookAt and up is unit length and orthogonal, get right vector by taking cross product of these instead of rotating it.
         right = lookAt.cross(up);
     }
 };
@@ -236,6 +240,7 @@ public:
 Plane plane;
 double pitchAngle = 0;
 double rollAngle = 0;
+float speed = 0.001;
 
 void display(void)
 {
@@ -250,8 +255,8 @@ void display(void)
     }
     
     // Move the plane forward
-    plane.moveForward(0.001);
-
+    plane.moveForward(speed);
+    
     glLoadIdentity();
     gluLookAt(plane.eye.x, plane.eye.y, plane.eye.z, plane.eye.x+plane.lookAt.x, plane.eye.y+plane.lookAt.y, plane.eye.z+plane.lookAt.z, plane.up.x, plane.up.y, plane.up.z);
     
@@ -311,6 +316,12 @@ void keyboard(unsigned char key, int x, int y)
         case 'c':
             polysize *= 2.0;
             break;
+        case 'w':
+            speed += 0.0005;
+            break;
+        case 's':
+            speed -= 0.0005;
+            break;
         case 27:
             exit(0);
             break;
@@ -341,16 +352,16 @@ void releaseKey(int key, int x, int y)
     // Set the pitchAngle or rollAngle to zero when key is released
     switch (key) {
         case GLUT_KEY_UP:
-           pitchAngle = 0;
+            pitchAngle = 0;
             break;
         case GLUT_KEY_DOWN:
-           pitchAngle = 0;
+            pitchAngle = 0;
             break;
         case GLUT_KEY_LEFT:
-           rollAngle = 0;
+            rollAngle = 0;
             break;
         case GLUT_KEY_RIGHT:
-           rollAngle = 0;
+            rollAngle = 0;
             break;
     }
 }
